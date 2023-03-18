@@ -1,6 +1,7 @@
 @page "/products/{ProductId:int}"
-@using Website.Client.Pages.Home.ProductPage.Components 
-@using Website.Client.Pages.Home.IndexPage.Components
+@using Website.Client.Pages.Home.ProductPage.Components
+@using Website.Client.Shared.Components.Badges
+@using Website.Client.Shared.Components.Products
 
 <Meta property="og:image" content="@string.Concat("/api/products/", ProductId, "/image")" />
 <Meta property="og:image:width" content="128" />
@@ -15,13 +16,14 @@
 
     <Meta property="og:description" content="@Product.Description" />
     
-
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Products</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@Product.Name</li>
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/products">Products</a></li>
+            <li class="breadcrumb-item active">@Product.Name</li>
         </ol>
     </nav>
+
     <div class="mb-5">
         <div class="row">
             <div class="col-lg-8">
@@ -78,18 +80,30 @@
 
                     <div>
                         <nav>
-                            <div class="nav nav-tabs" role="tablist">
+                            <ul class="nav nav-tabs small" role="tablist">
                                 @for (int i = 0; i < Product.Tabs.Count; i++)
                                 {
                                     var tab = Product.Tabs[i];
-                                    <button class="nav-link @(i == 0 ? "active" : "")" id="nav-@tab.Id-tab" data-bs-toggle="tab" data-bs-target="#nav-@tab.Id" type="button" role="tab">
-                                        @tab.Title
-                                    </button>
+                                    <li class="nav-item">
+                                        <button class="nav-link @(i == 0 ? "active" : "")" id="nav-@tab.Id-tab" data-bs-toggle="tab" data-bs-target="#nav-@tab.Id" type="button" role="tab">
+                                            @tab.Title
+                                        </button>
+                                    </li>                                    
                                 }
-                                <button class="nav-link @(Product.Tabs.Count == 0 ? "active" : "")" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab">
-                                    Reviews
-                                </button>
-                            </div>
+                                @if (Product.WorkshopItems.Count > 0)
+                                {
+                                    <li class="nav-item">
+                                        <button class="nav-link @(Product.Tabs.Count == 0 ? "active" : "")" id="nav-workshop-tab" data-bs-toggle="tab" data-bs-target="#nav-workshop" type="button" role="tab">
+                                            Workshop
+                                        </button>
+                                    </li>   
+                                }
+                                <li class="nav-item">
+                                    <button class="nav-link @(Product.Tabs.Count == 0 && Product.WorkshopItems.Count == 0 ? "active" : "")" id="nav-reviews-tab" data-bs-toggle="tab" data-bs-target="#nav-reviews" type="button" role="tab">
+                                        Reviews
+                                    </button>
+                                </li>
+                            </ul>
                         </nav>
                         <div class="tab-content p-3 bg-light rounded-2">
                             @for (int i = 0; i < Product.Tabs.Count; i++)
@@ -99,15 +113,21 @@
                                     @(new MarkupString(tab.Content))
                                 </div>
                             }
-                            <div class="tab-pane fade @(Product.Tabs.Count == 0 ? "show active" : "")" id="nav-reviews" role="tabpanel" aria-labelledby="nav-reviews-tab">
-                                <ReviewsTab Product="Product" UserReview="Review" OnDeleteReview="DeleteReviewAsync" />
+                            @if (Product.WorkshopItems.Count > 0)
+                            {
+                                <div class="tab-pane fade @(Product.Tabs.Count == 0 ? "show active" : "")" id="nav-workshop" role="tabpanel" aria-labelledby="nav-workshop-tab">
+                                    <WorkshopsTab @ref="WorkshopsTab" Product="Product" />
+                                </div>   
+                            }
+                            <div class="tab-pane fade @(Product.Tabs.Count == 0 && Product.WorkshopItems.Count == 0 ? "show active" : "")" id="nav-reviews" role="tabpanel" aria-labelledby="nav-reviews-tab">
+                                <ReviewsTab Product="Product" UserReview="Review" OnDeleteReview="DeleteReviewAsync" OnReviewReplyChanged="ReviewReplyChanged" />
                             </div>
                         </div>
                     </div>
                 }
                 else
                 {
-                    <VersionsPage Product="Product" />
+                    <VersionsPage Product="Product" OnDownloadProduct="ShowRequiredProductsAsync" />
                 }
 
             </div>
@@ -116,9 +136,38 @@
                     <img src="/api/images/@Product.ImageId" width="150" height="150" />
                     <h4 class="mt-2">@Product.Name</h4>
                     <ul class="list-unstyled">
-                        <li>Author: <a class="text-decoration-none" href="/users/@Product.Seller.Id">@Product.Seller.Name</a></li>
-                        <li><ProductPrice Product="Product" /></li>
-                        <li>Downloads: @(Product.Branches.Sum(x => x.Versions.Sum(x => x.DownloadsCount)))</li>
+                        <li class="fw-bold">
+                            @if (!string.IsNullOrEmpty(Product.Category))
+                            {
+                               <span><i class="@ProductCategoryConstants.GetCategoryIcon(Product.Category)"></i> @Product.Category</span> 
+                            }                            
+                        </li>
+                        @if (Product.Tags.Count > 0)
+                        {
+                            <li class="d-flex flex-wrap justify-content-center" style="padding: 0.25rem 2rem; gap: 0.25rem;">
+                                @foreach (MProductTag productTag in Product.Tags)
+                                {
+                                    <ProductTag Tag="productTag" />
+                                }
+                            </li>
+                        }
+                        <li>
+                            Author: <a class="text-decoration-none" href="/users/@Product.Seller.Id">@Product.Seller.Name</a><VerifiedSellerBadge Seller="Product.Seller" />
+                        </li>                        
+                        
+                        <li><ProductRating Product="Product" /></li>                        
+                        
+                        @if (Product.IsLoaderEnabled)
+                        {
+                            <li class="small">Servers: @(Product.ServersCount)</li>
+                        } else
+                        {
+                            <li class="small">Downloads: @(Product.TotalDownloadsCount)</li>    
+                        }
+
+                        
+                        <li><ProductPrice Product="Product" UsePricePrefix="true" PriceClass="fs-5" AlignCenter="true" /></li>
+
                         @if (!string.IsNullOrEmpty(Product.GithubUrl))
                         {
                             <li><a href="@Product.GithubUrl" target="_blank" class="text-decoration-none"><i class="bi bi-github"></i> GitHub</a></li>
@@ -134,7 +183,7 @@
                         }
                         @if (DefaultBranch != null)
                         {
-                            @if (IsCustomer && SteamAuth.IsAuthenticated && !IsSeller)
+                            @if (IsCustomer && UserService.IsAuthenticated && !IsSeller)
                             {
                                 @if (Review == null)
                                 {
@@ -164,11 +213,27 @@
                             }
                             @if (IsCustomer)
                             {
-                                <form class="d-grid gap-2" method="get" action="api/versions/download/@LatestVersion.Id">
-                                    <button class="btn btn-primary" type="submit">
-                                        <i class="bi bi-download"></i> Download Latest @DefaultBranch.Name (@LatestVersion.Name)
+                                if (Product.IsLoaderEnabled)
+                                {
+                                    <button class="btn btn-info">
+                                        <i class="fas fa-code"></i> Show Configuration
                                     </button>
-                                </form>
+                                }
+
+                                if (Product.IsLoaderEnabled)
+                                {
+                                    <a class="btn btn-primary" href="/loader">
+                                        <i class="bi bi-download"></i> Download Loader
+                                    </a>
+                                } 
+                                else {
+                                    <form class="d-grid gap-2" method="get" action="api/versions/download/@LatestVersion.Id">
+                                        <button class="btn btn-primary" type="submit" @onclick="ShowRequiredProductsAsync">
+                                            <i class="bi bi-download"></i> Download Latest @DefaultBranch.Name (@LatestVersion.Name)
+                                        </button>
+                                    </form>
+                                }
+                                
                             }
 
                             @if (!IsCustomer && IsInCart)
@@ -197,6 +262,7 @@
     </div>
 
     <ProductReviewModal @ref="ReviewModal" Product="Product" ReviewChanged="OnReviewChanged" OnDeleteReview="DeleteReviewAsync" />
+    <RequiredWorkshopsModal @ref="RequiredWorkshopsModal" Product="Product" WorkshopResult="WorkshopResult" />
 }
 else
 {

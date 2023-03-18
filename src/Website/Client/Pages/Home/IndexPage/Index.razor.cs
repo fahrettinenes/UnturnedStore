@@ -7,7 +7,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Website.Client.Services;
-using Website.Shared.Models;
+using Website.Shared.Constants;
+using Website.Shared.Models.Database;
 
 namespace Website.Client.Pages.Home.IndexPage
 {
@@ -24,11 +25,12 @@ namespace Website.Client.Pages.Home.IndexPage
 
         private IEnumerable<MProduct> SearchedProducts => Products
             .Where(x => string.IsNullOrEmpty(searchCategory) || x.Category == searchCategory)
-            .Where(x => string.IsNullOrEmpty(searchString) 
+            .Where(x => string.IsNullOrEmpty(searchString)
             || x.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)
             || x.Seller.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase));
 
-        private IEnumerable<MProduct> OrderedProducts {
+        private IEnumerable<MProduct> OrderedProducts
+        {
             get
             {
                 switch (orderBy)
@@ -38,11 +40,11 @@ namespace Website.Client.Pages.Home.IndexPage
                     case EOrderBy.BestRated:
                         return SearchedProducts.OrderByDescending(x => x.AverageRating).ThenByDescending(x => x.RatingsCount);
                     case EOrderBy.PriceAsc:
-                        return SearchedProducts.OrderBy(x => x.Price);
+                        return SearchedProducts.OrderBy(x => x.DiscountedPrice());
                     case EOrderBy.PriceDesc:
-                        return SearchedProducts.OrderByDescending(x => x.Price);
+                        return SearchedProducts.OrderByDescending(x => x.DiscountedPrice());
                     default:
-                        return SearchedProducts.OrderByDescending(x => x.CreateDate);
+                        return SearchedProducts.OrderByDescending(x => x.ReleaseDate is null ? x.CreateDate : x.ReleaseDate);
                 }
             }
         }
@@ -64,23 +66,14 @@ namespace Website.Client.Pages.Home.IndexPage
 
         private string GetCategoryIcon()
         {
-            if (searchCategory == "Rocket Plugin")
-            {
-                return "fas fa-rocket";
-            } else if (searchCategory == "OpenMod Plugin")
-            {
-                return "fas fa-plug";
-            } else
-            {
-                return "far fa-folder";
-            }
+            return ProductCategoryConstants.GetCategoryIcon(searchCategory);
         }
 
         protected override async Task OnInitializedAsync()
         {
             Products = await HttpClient.GetFromJsonAsync<MProduct[]>("api/products");
         }
-            
+
         private EOrderBy orderBy = EOrderBy.Newest;
 
         public enum EOrderBy

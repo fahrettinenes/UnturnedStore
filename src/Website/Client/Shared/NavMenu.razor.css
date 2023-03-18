@@ -1,0 +1,84 @@
+﻿.button-badge-count {
+    position: absolute;
+    top: 50%;
+    left: 70%;
+    color: white;
+    border-radius: 20%;
+
+    padding: 2px 5px 2px 5px;
+    font-weight: 900;
+
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    background-color: red;
+    font-family: Arial;
+}
+@media only screen and (max-width: 992px) {
+    .navbar--right {
+        flex-direction: row;
+    }
+
+    .navbar-arrow-up::after {
+        right: 12px !important;
+    }
+}
+
+@media only screen and (max-width: 575px) {
+    .navbar--right {
+        justify-content: space-evenly;
+    }
+}
+
+@media only screen and (max-width: 767px) and (min-width: 576px) {
+    .navbar-arrow-up::after {
+        right: 132px !important;
+    }
+}
+
+i {
+    transform: translateY(7%);
+}
+
+.NewMessagesDot {
+    position: absolute;
+    right: -50%;
+    bottom: 35%;
+    left: 50%;
+}
+
+.navbar-btn-avatar,
+.navbar-btn-avatar:active,
+.navbar-btn-avatar:hover,
+.navbar-btn-avatar:focus,
+.navbar-btn-avatar:hover:active,
+.navbar-btn-avatar:active:focus {
+    border: 0;
+    background: transparent;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    display: block;
+}
+
+.navbar-btn-avatar img {
+    height: 32px;
+    width: 32px;
+    border-radius: 4px;
+}
+
+.navbar-arrow-up::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: -1px;
+    right: 19px;
+    transform: translateY(-100%);
+    display: block;
+    border: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid rgba(0,0,0,0.15);
+}

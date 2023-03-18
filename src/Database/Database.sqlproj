@@ -15,12 +15,13 @@
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <TargetLanguage>CS</TargetLanguage>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -56,6 +57,7 @@
     <Folder Include="Properties" />
     <Folder Include="tables" />
     <Folder Include="procedures" />
+    <Folder Include="scripts" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="tables\Users.sql" />
@@ -70,12 +72,26 @@
     <Build Include="tables\ProductCustomers.sql" />
     <Build Include="tables\MessageReplies.sql" />
     <Build Include="tables\Messages.sql" />
+    <Build Include="tables\MessagesRead.sql" />
     <Build Include="tables\ProductReviews.sql" />
     <Build Include="procedures\GetProducts.sql" />
     <Build Include="procedures\GetUserProducts.sql" />
     <Build Include="procedures\GetUserProfile.sql" />
+    <Build Include="tables\CustomerServers.sql" />
+    <Build Include="procedures\GetHomeStatistics.sql" />
+    <Build Include="procedures\GetPromotedProducts.sql" />
+    <Build Include="procedures\GetProduct.sql" />
+    <Build Include="tables\Tags.sql" />
+    <Build Include="tables\ProductTags.sql" />
+    <Build Include="tables\ProductWorkshops.sql" />
+    <Build Include="tables\ProductReviewReplies.sql" />
+    <Build Include="tables\ProductSales.sql" />
+    <Build Include="tables\ProductCoupons.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Database.publish.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="scripts\Script.PostDeployment.sql" />
   </ItemGroup>
 </Project>

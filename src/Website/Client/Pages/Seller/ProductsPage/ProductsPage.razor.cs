@@ -5,8 +5,9 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Website.Client.Pages.Seller.ProductsPage.Components;
+using Website.Components.Basic;
 using Website.Shared.Constants;
-using Website.Shared.Models;
+using Website.Shared.Models.Database;
 
 namespace Website.Client.Pages.Seller.ProductsPage
 {
@@ -27,10 +28,10 @@ namespace Website.Client.Pages.Seller.ProductsPage
             Products = await HttpClient.GetFromJsonAsync<List<MProduct>>("api/seller/products");
         }
 
-        private async Task PostProductAsync(MProduct product)
+        private Task AddProductAsync(MProduct product)
         {
-            var response = await HttpClient.PostAsJsonAsync("api/products", product);
-            Products.Add(await  response.Content.ReadFromJsonAsync<MProduct>());
+            Products.Add(product);
+            return Task.CompletedTask;
         }
 
         public async Task ShowModalAsync()

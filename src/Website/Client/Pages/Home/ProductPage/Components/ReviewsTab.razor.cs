@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Website.Client.Services;
-using Website.Client.Shared.Components;
-using Website.Shared.Models;
+using Website.Components.Basic;
+using Website.Shared.Models.Database;
+using System.Net.Http;
 
 namespace Website.Client.Pages.Home.ProductPage.Components
 {
@@ -18,11 +16,39 @@ namespace Website.Client.Pages.Home.ProductPage.Components
 
         [Parameter]
         public EventCallback<MProductReview> OnDeleteReview { get; set; }
+        [Parameter]
+        public EventCallback<MProductReview> OnReviewReplyChanged { get; set; }
 
         [Inject]
-        public UserService UserService { get; set; }
+        public HttpClient HttpClient { get; set; }
+        [Inject]
+        public AuthenticatedUserService UserService { get; set; }
 
+        public ProductReviewReplyModal ReplyModal { get; set; }
         public ConfirmModal<MProductReview> DeleteReviewConfirm { get; set; }
+        public ConfirmModal<MProductReview> DeleteReplyConfirm { get; set; }
+
+        public async Task HandleEditReplyAsync(MProductReview review)
+        {
+            await ReplyModal.ShowModalAsync(review);
+        }
+
+        public async Task EditReplyAsync(MProductReview review)
+        {
+            await OnReviewReplyChanged.InvokeAsync(review);
+        }
+
+        public async Task HandleDeleteReplyAsync(MProductReview review)
+        {
+            await DeleteReplyConfirm.ShowAsync(review);
+        }
+
+        public async Task DeleteReplyAsync(MProductReview review)
+        {
+            await HttpClient.DeleteAsync("api/products/reviews/replies/" + review.Reply.Id);
+            review.Reply = null;
+            await OnReviewReplyChanged.InvokeAsync(review);
+        }
 
         public async Task AskDeleteReviewAsync(MProductReview review)
         {

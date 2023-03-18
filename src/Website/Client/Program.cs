@@ -1,16 +1,12 @@
-using BlazorTable;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Website.Client.Providers;
 using Website.Client.Services;
+using Website.Components.Extensions;
 
 namespace Website.Client
 {
@@ -26,13 +22,24 @@ namespace Website.Client
             builder.Services.AddOptions();
             builder.Services.AddAuthorizationCore();
             builder.Services.AddScoped<AuthenticationStateProvider, SteamAuthProvider>();
-            builder.Services.AddScoped<CartService>();
-            builder.Services.AddTransient<StorageService>();
-            builder.Services.AddTransient<ZIPService>();
-            builder.Services.AddScoped<UserService>();
-            builder.Services.AddBlazorTable();
 
-            await builder.Build().RunAsync();
+            builder.Services.AddScoped<CartService>();
+            builder.Services.AddScoped<AuthenticatedUserService>();
+            builder.Services.AddScoped<MessageReadService>();
+
+            builder.Services.AddTransient<StorageService>();
+  
+            builder.Services.AddTransient<ZIPService>();            
+            builder.Services.AddComponentsAndServices();
+
+            WebAssemblyHost host = builder.Build();
+
+            // Get UserInfo from the web API
+            await host.Services.GetRequiredService<AuthenticatedUserService>().InitializeAsync();
+            // Reload the cart from Local Storage
+            await host.Services.GetRequiredService<CartService>().ReloadCartAsync();            
+
+            await host.RunAsync();
         }
     }
 }

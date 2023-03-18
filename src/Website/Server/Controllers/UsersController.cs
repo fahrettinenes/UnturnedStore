@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using Website.Data.Repositories;
+using Website.Shared.Constants;
 using Website.Shared.Models;
+using Website.Shared.Models.Database;
 
 namespace Website.Server.Controllers
 {
@@ -30,7 +32,27 @@ namespace Website.Server.Controllers
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUserAsync(int userId)
         {
-            return Ok(await usersRepository.GetUserPublicAsync(userId));
+            return Ok(await usersRepository.GetUserAsync<UserInfo>(userId));
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMeUserAsync()
+        {
+            if (User.Identity?.IsAuthenticated ?? false)
+            {
+                return Ok(await usersRepository.GetUserAsync<UserInfo>(int.Parse(User.Identity.Name)));
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized);
+            }
+        }
+
+        [Authorize]
+        [HttpGet("settings")]
+        public async Task<IActionResult> GetSettingAsync()
+        {
+            return Ok(await usersRepository.GetUserAsync(int.Parse(User.Identity.Name)));
         }
 
         [HttpGet("{userId}/avatar")]
@@ -46,12 +68,26 @@ namespace Website.Server.Controllers
             return Ok(await usersRepository.GetUserProfileAsync(userId));
         }
 
+        [HttpGet("{userId}/seller")]
+        public async Task<IActionResult> GetUserSellerAsync(int userId)
+        {
+            Seller seller = await usersRepository.GetUserAsync<Seller>(userId);
+            if (RoleConstants.IsNotSeller(seller.Role))
+            {
+                return BadRequest();
+            }
+
+            return Ok(seller);
+        }
+
         [Authorize]
         [HttpPut("profile")]
         public async Task<IActionResult> PutProfileAsync([FromBody] MUser user)
         {
             if (user.Id.ToString() != User.Identity.Name)
+            {
                 return Unauthorized();
+            }
 
             await usersRepository.UpdateProfileAsync(user);
             return Ok();
@@ -62,7 +98,9 @@ namespace Website.Server.Controllers
         public async Task<IActionResult> PutSellerAsync([FromBody] MUser user)
         {
             if (user.Id.ToString() != User.Identity.Name)
+            {
                 return Unauthorized();
+            }
 
             await usersRepository.UpdateSellerAsync(user);
             return Ok();
@@ -73,23 +111,12 @@ namespace Website.Server.Controllers
         public async Task<IActionResult> PutNotificationsAsync([FromBody] MUser user)
         {
             if (user.Id.ToString() != User.Identity.Name)
+            {
                 return Unauthorized();
+            }
 
             await usersRepository.UpdateNotificationsAsync(user);
             return Ok();
-        }
-
-        [HttpGet("me")]
-        public async Task<IActionResult> GetMeUserAsync()
-        {
-            if (User.Identity?.IsAuthenticated ?? false)
-            {
-                return Ok(await usersRepository.GetUserPrivateAsync(int.Parse(User.Identity.Name)));
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status401Unauthorized);
-            }
         }
 
         [ResponseCache(NoStore = true, Duration = 0)]

@@ -1,6 +1,6 @@
 ﻿@page "/users/{UserId:int}"
 @using Website.Client.Pages.Home.UserPage.Components
-@using Website.Client.Pages.Home.IndexPage.Components
+@using Website.Client.Shared.Components.Products
 
 <Meta property="og:image" content="@string.Concat("/api/users/", UserId, "/avatar")" />
 <Meta property="og:image:width" content="128" />
@@ -14,6 +14,14 @@
     <Meta property="og:title" content="@User.Name" />
 
     <Meta property="og:description" content="@User.Biography" />
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Users</li>
+            <li class="breadcrumb-item active">@User.Name</li>
+        </ol>
+    </nav>
 
     <div class="row mt-5 mb-3">
         <div class="col-md-3">
@@ -54,7 +62,7 @@
                                         <span><i class="bi bi-download"></i> @product.TotalDownloadsCount</span>
                                     </td>
                                     <td class="align-middle fs-6">
-                                        <ProductPrice Product="product" />
+                                        <ProductPrice Product="product" SingleLine="true" DiscountClass="d-flex gap-1 flex-row-reverse justify-content-end" />
                                     </td>
                                 </tr>
                             }

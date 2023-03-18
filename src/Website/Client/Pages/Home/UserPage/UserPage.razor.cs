@@ -6,8 +6,9 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Website.Client.Services;
 using Website.Shared.Constants;
-using Website.Shared.Models;
+using Website.Shared.Models.Database;
 using Website.Shared.Models.Children;
+using Website.Components.Helpers;
 
 namespace Website.Client.Pages.Home.UserPage
 {
@@ -19,11 +20,11 @@ namespace Website.Client.Pages.Home.UserPage
         [Inject]
         public HttpClient HttpClient { get; set; }
         [Inject]
-        public UserService UserService { get; set; }
+        public AuthenticatedUserService UserService { get; set; }
         [Inject]
         public NavigationManager NavigationManager { get; set; }
 
-        public MUserProfile User { get; set; }
+        public UserProfile User { get; set; }
 
         private bool isLoaded = false;
 
@@ -33,7 +34,8 @@ namespace Website.Client.Pages.Home.UserPage
             isLoaded = true;
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                User = await response.Content.ReadFromJsonAsync<MUserProfile>();
+                User = await response.Content.ReadFromJsonAsync<UserProfile>();
+                User.Biography = MarkdownHelper.ParseToHtml(User.Biography);
             }
         }
         

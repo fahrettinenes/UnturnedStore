@@ -1,0 +1,103 @@
+﻿@page "/products"
+@using Website.Client.Shared.Components.Products
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active">Products</li>
+    </ol>
+</nav>
+
+<div class="mb-3">
+    <h4>List of products</h4>
+    <div class="dropdown-divider"></div>
+</div>
+
+@if (Products != null)
+{
+    <div class="row">
+        <div class="col-md-3 mb-md-0 mb-3">
+            <div class="mb-2 text-muted">
+                Results count: @OrderedProducts.Count()
+            </div>
+            <div class="mb-2">
+                <label class="form-label text-muted small mb-1">Order by</label>
+                <select class="form-select" @bind="orderBy">
+                    <option value="@EOrderBy.Newest">Newest</option>
+                    <option value="@EOrderBy.MostDownloads">Most Popular</option>
+                    <option value="@EOrderBy.BestRated">Best Rated</option>
+                    <option value="@EOrderBy.PriceAsc">Price Ascending</option>
+                    <option value="@EOrderBy.PriceDesc">Price Descending</option>
+                </select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label text-muted small mb-1">Category</label>
+                <select class="form-select" @bind="searchCategory">
+                    <option value="@string.Empty">All</option>
+                    @foreach (string category in ProductCategoryConstants.Categories)
+                    {
+                        <option value="@category">@category</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label text-muted small mb-1">Price range</label>
+                <div class="d-flex gap-1 align-items-baseline">
+                    <span class="fs-5">$</span>
+                    <input type="number" class="form-control" min="0" placeholder="0.00" step="any" @bind="@minPriceString">
+                    <span class="fs-5">-</span>
+                    <input type="number" class="form-control" min="0" placeholder="@HighestProductPrice" step="any" @bind="@maxPriceString">
+                </div>
+            </div>
+            <div class="mb-2">
+                <label class="form-label text-muted small mb-0">Minimum rating</label>
+                <div class="d-flex fs-5" style="width: fit-content; transform: translateY(-7%);" @onmouseover="() => IsHoveringRatings = true" @onmouseout="() => IsHoveringRatings = false">
+                    <i class="bi @GetRatingClass(1)" style="cursor: pointer;" @onclick="() => ChangeRating(1)" @onmouseover="() => ChangeHoverRating(1)"></i>
+                    <i class="bi @GetRatingClass(2)" style="cursor: pointer;" @onclick="() => ChangeRating(2)" @onmouseover="() => ChangeHoverRating(2)"></i>
+                    <i class="bi @GetRatingClass(3)" style="cursor: pointer;" @onclick="() => ChangeRating(3)" @onmouseover="() => ChangeHoverRating(3)"></i>
+                    <i class="bi @GetRatingClass(4)" style="cursor: pointer;" @onclick="() => ChangeRating(4)" @onmouseover="() => ChangeHoverRating(4)"></i>
+                    <i class="bi @GetRatingClass(5)" style="cursor: pointer;" @onclick="() => ChangeRating(5)" @onmouseover="() => ChangeHoverRating(5)"></i>
+                </div>
+            </div>
+            <div class="mb-2">
+                <label class="form-label text-muted small mb-1">Products from</label>
+                <div class="form-check form-switch">
+                    <input type="checkbox" class="form-check-input" id="verifiedselleronly-check" @bind-value="@verifiedSellersOnly">
+                    <label class="form-label form-check-label m-0" for="verifiedselleronly-check">Verified Sellers Only</label>
+                </div>
+            </div>
+            @if (ProductTags.Count > 0)
+            {
+                <div class="mb-2">
+                    <label class="form-label text-muted small mb-1">Tags</label>
+                    <ul class="m-0 small" style="list-style: none; padding-left: 0.5rem; column-gap: 0.25rem;">
+                        @foreach (MProductTag productTag in ProductTags)
+                        {
+                            <li>
+                                <input type="checkbox" class="form-check-input" id="@productTag.Title-tag-check" @oninput="(ChangeEventArgs e) => HandleSearchTag(productTag, (bool)e.Value)">
+                                <label class="form-label form-check-label" style="margin-bottom: 0.25rem;" for="@productTag.Title-tag-check">@productTag.Title</label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+        <div class="col-md-9">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" placeholder=" Search by Name, Description or Author" @bind="searchString" @bind:event="oninput" />
+                <button class="input-group-text btn-fuzzy" title="@(fuzzysearching ? "Disable Fuzzy Search" : "Enable Fuzzy Search")" @onclick="() => { fuzzysearching = !fuzzysearching; }">
+                    <i class="fas fa-bolt" style="@(fuzzysearching ? "color: #9e61ff;" : "")"></i>
+                </button>
+            </div>   
+            <Virtualize Items="OrderedProducts" Context="product">
+                <ProductItem Product="product" ProductTags="ProductTags" />
+            </Virtualize>
+        </div>
+    </div>
+    
+} else
+{
+    <Progressbar />
+}
+

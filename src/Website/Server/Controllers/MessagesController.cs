@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Website.Data.Repositories;
 using Website.Server.Services;
-using Website.Shared.Models;
+using Website.Shared.Models.Database;
 
 namespace Website.Server.Controllers
 {
@@ -33,10 +31,17 @@ namespace Website.Server.Controllers
         [HttpGet("{messageId}")]
         public async Task<IActionResult> GetMessageAsync(int messageId)
         {
-            if (!await messagesRepository.IsMessageUserAsync(messageId, int.Parse(User.Identity.Name)))
+            int userId = int.Parse(User.Identity.Name);
+            if (!await messagesRepository.IsMessageUserAsync(messageId, userId))
+            {
                 return BadRequest();
+            }
 
-            return Ok(await messagesRepository.GetMessageAsync(messageId));
+            MMessage message = await messagesRepository.GetMessageAsync(messageId);
+
+            message.Read = await messagesRepository.GetMessageReadAsync(messageId, userId);
+
+            return Ok(message);
         }
 
         [HttpPost]
@@ -51,7 +56,7 @@ namespace Website.Server.Controllers
 
             message = await messagesRepository.AddMessageAsync(message);
 
-            await discordService.SendMessageAsync(message.Id, Request.Headers["Origin"]);
+            await discordService.SendMessageAsync(message.Id);
 
             return Ok(message);
         }
@@ -61,7 +66,9 @@ namespace Website.Server.Controllers
         {
             int userId = int.Parse(User.Identity.Name);
             if (!await messagesRepository.IsMessageUserAsync(messageId, userId))
+            {
                 return BadRequest();
+            }
 
             await messagesRepository.CloseMessageAsync(messageId, userId);
             return Ok();
@@ -72,12 +79,14 @@ namespace Website.Server.Controllers
         {
             int userId = int.Parse(User.Identity.Name);
             if (!await messagesRepository.IsMessageUserAsync(reply.MessageId, userId))
+            {
                 return BadRequest();
+            }
 
             reply.UserId = userId;
             reply = await messagesRepository.AddMessageReplyAsync(reply);
 
-            await discordService.SendMessageReplyAsync(reply, Request.Headers["Origin"]);
+            await discordService.SendMessageReplyAsync(reply);
 
             return Ok(reply);
         }
@@ -86,7 +95,9 @@ namespace Website.Server.Controllers
         public async Task<IActionResult> PutMessageReplyAsync([FromBody] MMessageReply reply)
         {
             if (!await messagesRepository.IsMessageReplyUserAsync(reply.Id, int.Parse(User.Identity.Name)))
+            {
                 return BadRequest();
+            }
 
             await messagesRepository.UpdateMessageReplyAsync(reply);
             return Ok();
@@ -96,9 +107,46 @@ namespace Website.Server.Controllers
         public async Task<IActionResult> DeleteMessageReplyAsync(int replyId)
         {
             if (!await messagesRepository.IsMessageReplyUserAsync(replyId, int.Parse(User.Identity.Name)))
+            {
                 return BadRequest();
+            }
 
             await messagesRepository.DeleteMessageReplyAsync(replyId);
+            return Ok();
+        }
+
+        [HttpGet("read")]
+        public async Task<IActionResult> GetMessageReadAsync()
+        {
+            int userId = int.Parse(User.Identity.Name);
+            return Ok(await messagesRepository.GetNewMessagesAsync(userId));
+        }
+
+        [HttpPost("read")]
+        public async Task<IActionResult> PostMessageReadAsync([FromBody] MMessageRead read)
+        {
+            int userId = int.Parse(User.Identity.Name);
+            if (!await messagesRepository.IsMessageUserAsync(read.MessageId, userId))
+            {
+                return BadRequest();
+            }
+
+            read.UserId = userId;
+            read = await messagesRepository.AddMessageReadAsync(read);
+            
+            return Ok(read);
+        }
+
+        [HttpPut("read")]
+        public async Task<IActionResult> PutMessageReadAsync([FromBody] MMessageRead read)
+        {
+            int userId = int.Parse(User.Identity.Name);
+            if (!await messagesRepository.IsMessageUserAsync(read.MessageId, userId))
+            {
+                return BadRequest();
+            }
+
+            await messagesRepository.UpdateMessageReadAsync(read);
             return Ok();
         }
     }

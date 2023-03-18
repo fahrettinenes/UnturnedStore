@@ -10,8 +10,10 @@ using Website.Client.Extensions;
 using Website.Client.Pages.Home.ProductPage.Components;
 using Website.Client.Providers;
 using Website.Client.Services;
-using Website.Shared.Models;
+using Website.Components.Helpers;
+using Website.Shared.Models.Database;
 using Website.Shared.Params;
+using Website.Shared.Results;
 
 namespace Website.Client.Pages.Home.ProductPage
 {
@@ -29,9 +31,7 @@ namespace Website.Client.Pages.Home.ProductPage
         [Inject]
         public NavigationManager NavigationManager { get; set; }
         [Inject]
-        public AuthenticationStateProvider AuthState { get; set; }
-
-        public SteamAuthProvider SteamAuth => AuthState as SteamAuthProvider;
+        public AuthenticatedUserService UserService { get; set; }
 
         public MProduct Product { get; set; }
 
@@ -46,6 +46,16 @@ namespace Website.Client.Pages.Home.ProductPage
 
         private HttpStatusCode statusCode;
 
+        public WorkshopsTab WorkshopsTab { get; set; }
+        public RequiredWorkshopsModal RequiredWorkshopsModal { get; set; }
+        public WorkshopItemResult WorkshopResult => WorkshopsTab?.WorkshopResult;
+
+        private async Task ShowRequiredProductsAsync()
+        {
+            if (Product.WorkshopItems.Count == 0 || !Product.WorkshopItems.Any(w => w.IsRequired)) return;
+            await RequiredWorkshopsModal.ShowModalAsync();
+        }
+
         public ProductReviewModal ReviewModal { get; set; }
         public MProductReview Review { get; set; }
 
@@ -57,10 +67,21 @@ namespace Website.Client.Pages.Home.ProductPage
             {
                 Product = await response.Content.ReadFromJsonAsync<MProduct>();
 
-                if (SteamAuth.IsAuthenticated)
+                if (UserService.IsAuthenticated)
                 {
-                    Review = Product.Reviews.FirstOrDefault(x => x.UserId == SteamAuth.User.Id);
+                    Review = Product.Reviews.FirstOrDefault(x => x.UserId == UserService.UserInfo.Id);
                     Product.Reviews.Remove(Review);
+                }
+
+                foreach (MProductTab tab in Product.Tabs)
+                {
+                    tab.Content = MarkdownHelper.ParseToHtml(tab.Content, false);
+                }
+
+                Product.RatingsCount = Product.Reviews.Count;
+                if (Product.RatingsCount > 0)
+                {
+                    Product.AverageRating = (byte)(Product.Reviews.Sum(x => x.Rating) / Product.Reviews.Count);
                 }
             }
 
@@ -74,7 +95,7 @@ namespace Website.Client.Pages.Home.ProductPage
 
         private bool IsInCart => CartService?.Carts.Exists(x => x.Items.Exists(x => x.ProductId == ProductId)) ?? false;
         private bool IsCustomer => Product.Price <= 0 || Product.Customer != null || IsSeller;
-        private bool IsSeller => SteamAuth.IsAuthenticated && SteamAuth.User.Id == Product.SellerId;
+        private bool IsSeller => UserService.IsAuthenticated && UserService.UserInfo.Id == Product.SellerId;
 
         private async Task AddToCartAsync()
         {
@@ -100,6 +121,17 @@ namespace Website.Client.Pages.Home.ProductPage
         private void OnReviewChanged(MProductReview review)
         {
             Review = review;
+        }
+
+        private void ReviewReplyChanged(MProductReview review)
+        {
+            if (review.Id == Review?.Id)
+            {
+                Review = review;
+                return;
+            }
+
+            Product.Reviews[Product.Reviews.FindIndex(r => r.Id == review.Id)] = review;
         }
 
         private async Task DeleteReviewAsync(MProductReview review)

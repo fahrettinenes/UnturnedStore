@@ -1,0 +1,64 @@
+﻿@using Website.Client.Shared.Components.Badges
+<div class="p-3 d-flex align-items-center bg-light border border-1 my-2">
+    <div>
+        <a href="/products/@Product.Id">
+            <img src="/api/images/@Product.ImageId" width="90" height="90" class="rounded" />
+        </a>        
+    </div>
+    <div class="ms-3 h-100">
+        <div>
+            <a class="text-decoration-none fs-5" href="/products/@Product.Id">@Product.Name</a> 
+            <div class="d-md-inline d-block">
+                by <a class="text-decoration-none fw-bold text-muted" href="/users/@Product.SellerId">@Product.Seller.Name</a><VerifiedSellerBadge Seller="Product.Seller" />
+            </div>            
+        </div>
+        <div class="d-flex align-items-end flex-wrap" style="column-gap: 0.25rem;">
+            <div class="text-nowrap">
+                <ProductRating Product="Product" />
+            </div>
+            
+            @if (!string.IsNullOrEmpty(Product.Category))
+            {
+                <div class="small text-muted" title="@Product.Category">
+                    <i class="@ProductCategoryConstants.GetCategoryIcon(Product.Category)"></i>
+                </div>
+            }
+            @if (Product.IsLoaderEnabled)
+            {
+                <div class="small text-black-50" title="Loader Required">
+                    <i class="fas fa-cloud-download-alt"></i>
+                </div>
+            }
+            @if (Product.Tags.Count > 0)
+            {
+                <div class="d-flex flex-wrap" style="gap: 0.25rem;">
+                @foreach (MProductTag productTag in Product.Tags)
+                {
+                    <ProductTag Tag="productTag" />
+                }
+                </div>
+            }
+        </div>
+        <div class="d-none d-md-block" style="font-size: 14px;">
+            @Product.GetDescription()
+        </div>
+    </div>
+    <div class="ms-auto text-end">
+        <div class="text-nowrap">
+            <div>
+                <ProductPrice Product="Product" PriceClass="fs-5" />
+            </div>
+            <div class="d-md-block d-none text-muted small">
+                @if (Product.IsLoaderEnabled)
+                {
+                    <span><i class="fas fa-server"></i> @Product.ServersCount</span>
+                } else
+                {
+                    <span><i class="fas fa-download"></i> @Product.TotalDownloadsCount</span>
+                }
+
+            </div>
+        </div>
+    </div>
+
+</div>

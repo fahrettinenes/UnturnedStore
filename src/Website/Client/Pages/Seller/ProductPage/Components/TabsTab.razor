@@ -1,4 +1,5 @@
-﻿
+﻿@using Website.Components.MarkdownEditor
+
 <div class="mb-3 d-flex align-items-center">
     <h5>All Tabs</h5>
     <div class="ms-auto">
@@ -22,7 +23,7 @@
 
 @if (Tab != null)
 {
-    <div class="mb-3 border border-1 border-secondary rounded-3 shadow-lg p-3">
+    <div class="mb-3 border border-1 border-secondary rounded-3 shadow-sm p-3">
         <EditForm Model="Tab" OnValidSubmit="SubmitAsync">
 
             <div class="mb-3">
@@ -32,41 +33,8 @@
             </div>
 
             <div class="mb-3">
-                <BlazoredTextEditor @ref="editor" DebugLevel="error">
-                    <ToolbarContent>
-                        <select class="ql-header">
-                            <option selected=""></option>
-                            <option value="1"></option>
-                            <option value="2"></option>
-                            <option value="3"></option>
-                            <option value="4"></option>
-                            <option value="5"></option>
-                        </select>
-                        <span class="ql-formats">
-                            <button class="ql-bold"></button>
-                            <button class="ql-italic"></button>
-                            <button class="ql-underline"></button>
-                            <button class="ql-strike"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <select class="ql-color"></select>
-                            <select class="ql-background"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered"></button>
-                            <button class="ql-list" value="bullet"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-link"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-code-block"></button>
-                        </span>
-                    </ToolbarContent>
-                    <EditorContent>
-                        @(new MarkupString(Tab.Content))
-                    </EditorContent>
-                </BlazoredTextEditor>
+                <label class="form-label">Content</label>
+                <MarkdownEditor @bind-Value="Tab.Content" EnableToolbar="false" DisableHtml="false" />
             </div>
 
             <div class="mb-3 form-check">
@@ -116,62 +84,4 @@
 
 
 
-@code {
-    [Parameter]
-    public MProduct Product { get; set; }
 
-    [Inject]
-    public HttpClient HttpClient { get; set; }
-    [Inject]
-    public IJSRuntime JsRuntime { get; set; }
-
-    private MProductTab Tab { get; set; }
-
-    private BlazoredTextEditor editor;
-
-    private string htmlString => Tab.Content;
-
-
-    private void EditTab(MProductTab tab)
-    {
-        Tab = tab;
-    }
-
-    private void CreateTab()
-    {
-        Tab = new MProductTab() { IsEnabled = true };
-    }
-
-    private bool isLoading2;
-    private async Task DeleteAsync()
-    {
-        isLoading2 = true;
-        await HttpClient.DeleteAsync($"api/products/tabs/{Tab.Id}");
-        Product.Tabs.Remove(Tab);
-        Tab = null;
-        isLoading2 = false;
-    }
-
-    private bool isLoading;
-    private async Task SubmitAsync()
-    {
-        isLoading = true;
-
-        Tab.Content = await editor.GetHTML();
-
-        if (Tab.Id == default)
-        {
-            Tab.ProductId = Product.Id;
-            var response = await HttpClient.PostAsJsonAsync("api/products/tabs", Tab);
-            Product.Tabs.Add(await response.Content.ReadFromJsonAsync<MProductTab>());
-            Tab = new MProductTab();
-        } else
-        {
-            await HttpClient.PutAsJsonAsync("api/products/tabs", Tab);
-        }
-
-        Tab = null;
-
-        isLoading = false;
-    }
-}

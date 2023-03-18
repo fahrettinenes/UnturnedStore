@@ -21,3 +21,24 @@ function HideModal(id) {
     var modal = bootstrap.Modal.getInstance(myModalEl);
     modal.hide();
 }
+
+document.onkeydown = function (t) {
+    if (t.which == 9) {
+        if (t.srcElement.type == 'textarea') {
+            t.preventDefault();
+            const TAB_SIZE = 4;
+            document.execCommand('insertText', false, ' '.repeat(TAB_SIZE));
+        }
+    }
+}
+
+function BlazorScrollToId(id) {
+    const element = document.getElementById(id);
+    if (element instanceof HTMLElement) {
+        element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest"
+        });
+    }
+}
